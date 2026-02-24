@@ -25,37 +25,36 @@ namespace SlafightInstaller.Games.STRAFTAT
             }
         };
 
-        // 二重インストール防止
         private static readonly HashSet<string> InstalledMods = new();
 
         public static void Entry()
         {
-            Console.Write("[STRAFTAT]Please enter Game Path: ");
+            Console.Write(Messages.Get("EnterGamePath"));
             var gamePath = Console.ReadLine();
 
             if (!Utils.IsValidPath(gamePath))
             {
-                Console.WriteLine("[STRAFTAT]Please enter a valid Game Path!");
+                Console.WriteLine(Messages.Get("InvalidGamePath"));
                 return;
             }
 
             Debug.Assert(gamePath != null, nameof(gamePath) + " != null");
             if (!File.Exists(Path.Combine(gamePath!, "STRAFTAT.exe")))
             {
-                Console.WriteLine("[STRAFTAT]Please enter a valid Game Path!");
+                Console.WriteLine(Messages.Get("InvalidGamePath"));
                 return;
             }
 
-            Console.WriteLine("[STRAFTAT]Usable Mods:");
+            Console.WriteLine(Messages.Get("UsableMods"));
             Console.WriteLine(string.Join(",\n", ModsList));
 
-            Console.Write("[STRAFTAT]Please enter mod name: ");
+            Console.Write(Messages.Get("EnterModName"));
             var userInput = Console.ReadLine();
 
             var selectedMod = ModsList.FirstOrDefault(m => m.ModName == userInput);
             if (selectedMod.ModName == null)
             {
-                Console.WriteLine("[STRAFTAT]Please enter a valid mod name!");
+                Console.WriteLine(Messages.Get("InvalidModName"));
                 return;
             }
 
@@ -66,7 +65,7 @@ namespace SlafightInstaller.Games.STRAFTAT
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[STRAFTAT]Install failed: {ex.Message}");
+                Console.WriteLine(Messages.Get("InstallFailed") + ex.Message);
             }
         }
 
@@ -128,8 +127,19 @@ namespace SlafightInstaller.Games.STRAFTAT
                 var dstDir = Path.Combine(gamePath, "BepInEx", "plugins");
                 Directory.CreateDirectory(dstDir);
 
-                var url = "https://github.com/ALBINALSHAIKH/moreStrafts/releases/download/v0.0.4/moreStrafts.dll";
                 var dst = Path.Combine(dstDir, "moreStrafts.dll");
+                if (File.Exists(dst))
+                {
+                    Console.Write(Messages.Get("OverwriteAsk"));
+                    var ans = Console.ReadLine()?.Trim().ToLower();
+                    if (ans != "y")
+                    {
+                        Console.WriteLine(Messages.Get("OverwriteSkip"));
+                        return;
+                    }
+                }
+
+                var url = "https://github.com/ALBINALSHAIKH/moreStrafts/releases/download/v0.0.4/moreStrafts.dll";
 
                 using var client = new WebClient();
                 Console.WriteLine($"[STRAFTAT]Downloading moreStrafts from {url} ...");

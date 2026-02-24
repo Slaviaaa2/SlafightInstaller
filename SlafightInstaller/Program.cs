@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using SlafightInstaller.Games;
 using SlafightInstaller.Games.STRAFTAT;
 
 namespace SlafightInstaller
 {
     internal class Program
     {
-        public static List<string> games = new List<string>()
+        public static List<string> games = new()
         {
             "STRAFTAT",
         };
+
         public static void Main(string[] args)
         {
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
@@ -18,19 +18,27 @@ namespace SlafightInstaller
                 Console.WriteLine("You need to run this program as a Windows NT.");
                 return;
             }
+
             if (!Environment.Is64BitOperatingSystem)
             {
                 Console.WriteLine("You need to run this program as a 64-bit operating system.");
                 return;
             }
-            string userInput;
-            Console.WriteLine("Welcome to the Slafight Installer!");
-            Console.WriteLine($"Please select target game:\n{String.Join(",\n", games)}");
-            Console.Write("Game Name: ");
-            userInput = Console.ReadLine();
+
+            Console.Write("Language / 言語 (en/jp): ");
+            var langInput = Console.ReadLine()?.Trim().ToLower();
+            Messages.Current = langInput == "jp" ? Lang.Jp : Lang.En;
+
+            Console.WriteLine(Messages.Get("Welcome"));
+            Console.WriteLine(Messages.Get("SelectGame"));
+            Console.WriteLine(string.Join(",\n", games));
+
+            Console.Write(Messages.Get("GameName"));
+            var userInput = Console.ReadLine();
+
             if (!games.Contains(userInput))
             {
-                Console.WriteLine("Please select valid game!");
+                Console.WriteLine(Messages.Get("InvalidGame"));
                 return;
             }
 

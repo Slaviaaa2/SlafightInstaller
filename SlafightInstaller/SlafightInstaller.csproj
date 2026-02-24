@@ -46,6 +46,7 @@
     <ItemGroup>
         <Compile Include="Games\STRAFTAT\STRAFTAT.cs" />
         <Compile Include="InstallUtils\InstallBepInEx.cs" />
+        <Compile Include="Localisation.cs" />
         <Compile Include="Program.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="Structs.cs" />
