@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -28,6 +29,12 @@ namespace SlafightInstaller
                 // 上書き true
                 entry.ExtractToFile(fullPath, overwrite: true);
             }
+        }
+
+        public static void EndScreen()
+        {
+            Console.WriteLine("Press any key to exit... / 何かキーを押して閉じる...");
+            Console.ReadKey();
         }
     }
 }

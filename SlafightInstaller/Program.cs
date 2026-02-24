@@ -16,12 +16,14 @@ namespace SlafightInstaller
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
             {
                 Console.WriteLine("You need to run this program as a Windows NT.");
+                Utils.EndScreen();
                 return;
             }
 
             if (!Environment.Is64BitOperatingSystem)
             {
                 Console.WriteLine("You need to run this program as a 64-bit operating system.");
+                Utils.EndScreen();
                 return;
             }
 
@@ -39,6 +41,7 @@ namespace SlafightInstaller
             if (!games.Contains(userInput))
             {
                 Console.WriteLine(Messages.Get("InvalidGame"));
+                Utils.EndScreen();
                 return;
             }
 
@@ -48,6 +51,8 @@ namespace SlafightInstaller
                     STRAFTAT.Entry();
                     break;
             }
+            
+            Utils.EndScreen();
         }
     }
 }
