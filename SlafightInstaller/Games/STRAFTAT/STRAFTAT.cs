@@ -8,7 +8,7 @@ using SlafightInstaller.InstallUtils;
 namespace SlafightInstaller.Games.STRAFTAT
 {
     public static class STRAFTAT
-    {
+    { 
         public static List<ModBase> ModsList = new List<ModBase>
         {
             new ModBase
@@ -19,14 +19,17 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ConflictsWith = new List<string>(),
                 SourceUrl = null
             },
+            // ========= Thunderstore DLL系 (plugins直下) =========
             new ModBase
             {
                 ModName = "ModMenu",
                 ModVersion = "1.1.3",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/9cfe22b0c239e2ec1befd824dcffc1c9f1fd719158d65e49b2062fd251b27a0d.sh_X9iHTbc.blob",
-                InstallFileName = "ModMenu.dll"
+                SourceUrl = "https://thunderstore.io/package/download/kestrel/Mod_Menu/1.1.3/",
+                InstallFileName = "ModMenu.zip",
+                InstallSubPath = "BepInEx/plugins",
+                ExtractTargetSubPath = null
             },
             new ModBase
             {
@@ -34,8 +37,10 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ModVersion = "1.2.7",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/df196fad52ebf98ea5fdbfe7ee0118e67a5e650d3ff01f1b9b8a50528e8176bc.sh_oBz6Gj2.blob",
-                InstallFileName = "Chat_Commands.dll"
+                SourceUrl = "https://thunderstore.io/package/download/kestrel/Chat_Commands/1.2.7/",
+                InstallFileName = "Chat_Commands.zip",
+                InstallSubPath = "BepInEx/plugins",
+                ExtractTargetSubPath = null
             },
             new ModBase
             {
@@ -43,6 +48,7 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ModVersion = "0.0.4",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
+                // GitHubはDLL直リンクなのでそのまま
                 SourceUrl = "https://github.com/ALBINALSHAIKH/moreStrafts/releases/download/v0.0.4/moreStrafts.dll"
             },
             new ModBase
@@ -55,8 +61,10 @@ namespace SlafightInstaller.Games.STRAFTAT
                     new ModDependency("moreStrafts", "0.0.4")
                 },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/65a2ea98ae889e7152f969dfb73c62a406a24df738999992c6622a97655e7359.sh_uvDsSU1.blob",
-                InstallFileName = "MoreStrafts_UISpawnAddon.dll"
+                SourceUrl = "https://thunderstore.io/package/download/Yeastmans/MoreStrafts_UISpawnAddon/1.0.5/",
+                InstallFileName = "MoreStrafts_UISpawnAddon.zip",
+                InstallSubPath = null,
+                ExtractTargetSubPath = null
             },
             new ModBase
             {
@@ -64,9 +72,12 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ModVersion = "1.0.1",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/9dc9b1effec14a8c2cbc211ebf259d477f5b734bc50e92e6621d28bcf9571991.sh_nNiakzJ.blob",
-                InstallFileName = "Fancy.dll"
+                SourceUrl = "https://thunderstore.io/package/download/kestrel/Fancy/1.0.1/",
+                InstallFileName = "Fancy.zip",
+                InstallSubPath = null,
+                ExtractTargetSubPath = null
             },
+            // ========= Cosmetic Bundles (CosmeticBundlesフォルダ) =========
             new ModBase
             {
                 ModName = "Blacktie Straftat",
@@ -79,7 +90,9 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ConflictsWith = new List<string>(),
                 SourceUrl = "https://thunderstore.io/package/download/BlacktieTeam/Blacktie_Straftat/1.1.0/",
                 InstallFileName = "Blacktie_Straftat.zip",
-                InstallSubPath = "BepInEx/plugins/CosmeticBundles",
+                // ZIP内: BlacktieStraftat/BepInEx/plugins/CosmeticBundles/...
+                InstallSubPath = "BlacktieStraftat/BepInEx/plugins/CosmeticBundles",
+                // 展開先: BepInEx/plugins/CosmeticBundles/...
                 ExtractTargetSubPath = "CosmeticBundles"
             },
             new ModBase
@@ -94,17 +107,21 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ConflictsWith = new List<string>(),
                 SourceUrl = "https://thunderstore.io/package/download/ImmortalChickens/Straftat_Cosmetics_Bundle_IC/1.0.2/",
                 InstallFileName = "Straftat_Cosmetics_Bundle_IC.zip",
+                // ZIP内: Straftat_Cosmetics_Bundle_IC/plugins/CosmeticBundle_IC/...
                 InstallSubPath = "plugins/CosmeticBundle_IC",
                 ExtractTargetSubPath = "CosmeticBundles"
             },
+            // ========= その他DLL系 =========
             new ModBase
             {
                 ModName = "Custom Levels",
                 ModVersion = "1.0.0",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/c94bf71e32b9afc5743a998fbea7dec938987e1faa74f6684c69eea68b9dd808.sh_YUmU4UE.blob",
-                InstallFileName = "Custom_Levels.dll"
+                SourceUrl = "https://thunderstore.io/package/download/bro/Custom_Levels/1.0.0/",
+                InstallFileName = "Custom_Levels.zip",
+                InstallSubPath = "BepInEx/plugins",
+                ExtractTargetSubPath = null
             },
             new ModBase
             {
@@ -112,8 +129,21 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ModVersion = "1.1.0",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/31f32f6ca725a9a68875099a387951136cd16ad1d256603e2bad253e7e1245ec.sh_8Yqb5fw.blob",
-                InstallFileName = "Aboubi_Acrobatic.dll"
+                SourceUrl = "https://thunderstore.io/package/download/kestrel/Aboubi_Acrobatics/1.1.0/",
+                InstallFileName = "Aboubi_Acrobatics.zip",
+                InstallSubPath = "BepInEx/plugins",
+                ExtractTargetSubPath = null
+            },
+            new ModBase
+            {
+                ModName = "Aboubi Unbound",
+                ModVersion = "1.0.0",
+                ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
+                ConflictsWith = new List<string>(),
+                SourceUrl = "https://thunderstore.io/package/download/kestrel/Aboubi_Unbound/1.0.0/",
+                InstallFileName = "Aboubi_Unbound.zip",
+                InstallSubPath = "BepInEx/plugins",
+                ExtractTargetSubPath = null
             },
             new ModBase
             {
@@ -121,8 +151,12 @@ namespace SlafightInstaller.Games.STRAFTAT
                 ModVersion = "1.0.0",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
                 ConflictsWith = new List<string>(),
-                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/9455b3865ca8986a3af3618e3c4ef938e45bec978c237d3e17fbd32d3bc84539.sh_IqTHhn8.blob",
-                InstallFileName = "FreecamSpectate.dll"
+                SourceUrl = "https://thunderstore.io/package/download/LeodisTaylor/FreecamSpectate/1.0.0/",
+                InstallFileName = "FreecamSpectate.zip",
+                // README: FreecamSpectate フォルダごと plugins に入れろと書いてある
+                // ZIP内: FreecamSpectate/FreecamSpectate.dll → フォルダごとplugins配下に置く
+                InstallSubPath = null,                // ルートから全部
+                ExtractTargetSubPath = null           // plugins/FreecamSpectate/...
             }
         };
 
@@ -384,25 +418,43 @@ namespace SlafightInstaller.Games.STRAFTAT
 
             foreach (var mod in ModsList)
             {
-                var fileName = mod.InstallFileName ?? Path.GetFileName(mod.SourceUrl);
-                var isZip = fileName?.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) == true;
+                if (mod.ModName == "BepInEx")
+                    continue;
 
                 bool installed = false;
+
+                var originalName = mod.InstallFileName ?? Path.GetFileName(mod.SourceUrl);
+                var isZip = !string.IsNullOrEmpty(originalName) &&
+                            originalName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+
                 if (isZip)
                 {
                     if (!string.IsNullOrEmpty(mod.ExtractTargetSubPath))
                     {
+                        // ZIP＋ExtractTargetSubPathあり → そのディレクトリがあればインストール済み扱い
                         var targetDir = Path.Combine(pluginsDir, mod.ExtractTargetSubPath);
                         installed = Directory.Exists(targetDir);
                     }
+                    else
+                    {
+                        // ZIP＋SubPathなし → Mod名でDLL検索
+                        var dllPattern = mod.ModName + "*.dll";
+                        installed = Directory.GetFiles(pluginsDir, dllPattern, SearchOption.AllDirectories).Length > 0;
+                    }
                 }
-                else if (!string.IsNullOrEmpty(fileName))
+                else
                 {
-                    var filePath = Path.Combine(pluginsDir, fileName);
+                    // 生DLL: InstallModのDLL名ロジックを再現
+                    var baseName = string.IsNullOrEmpty(originalName)
+                        ? mod.ModName
+                        : Path.GetFileNameWithoutExtension(originalName);
+                    var dllName = baseName + ".dll";
+
+                    var filePath = Path.Combine(pluginsDir, dllName);
                     installed = File.Exists(filePath);
                 }
 
-                if (installed && mod.ModName != "BepInEx")  // BepInExは別途判定
+                if (installed)
                     InstalledMods[mod.ModName] = mod.ModVersion;
             }
 
@@ -564,33 +616,30 @@ namespace SlafightInstaller.Games.STRAFTAT
             var pluginsDir = Path.Combine(gamePath, "BepInEx", "plugins");
             Directory.CreateDirectory(pluginsDir);
 
-            var fileName = mod.InstallFileName ?? Path.GetFileName(mod.SourceUrl);
-            var isZip = fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
-            var tmpFile = Path.Combine(Path.GetTempPath(), $"{mod.ModName}_{fileName}");
+            // 元の名前（InstallFileName優先、なければURL末尾）
+            var originalName = mod.InstallFileName ?? Path.GetFileName(mod.SourceUrl);
 
-            if (!isZip)
-            {
-                var finalDst = Path.Combine(pluginsDir, fileName);
-                if (File.Exists(finalDst))
-                {
-                    ConsoleUI.Prompt(Messages.Get("OverwriteAsk"));
-                    var ans = Console.ReadLine()?.Trim().ToLower();
-                    if (ans != "y")
-                    {
-                        ConsoleUI.Warn(Messages.Get("OverwriteSkip"));
-                        return;
-                    }
-                }
-            }
+            // zip判定は originalName でだけ行う
+            var isZip = !string.IsNullOrEmpty(originalName) &&
+                        originalName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+
+            // 一時ファイル名（なければ拡張子付きで補完）
+            var tmpName = string.IsNullOrEmpty(originalName)
+                ? (isZip ? mod.ModName + ".zip" : mod.ModName + ".dll")
+                : originalName;
+
+            var tmpFile = Path.Combine(Path.GetTempPath(), $"{mod.ModName}_{tmpName}");
 
             try
             {
                 using var client = new WebClient();
+                client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
                 ConsoleUI.Info($"Downloading {mod.ModName} from {mod.SourceUrl} ...");
                 client.DownloadFile(mod.SourceUrl, tmpFile);
 
                 if (isZip)
                 {
+                    // ZIP: ExtractTargetSubPath があればそこ、なければ plugins 直下
                     var extractTarget = string.IsNullOrEmpty(mod.ExtractTargetSubPath)
                         ? pluginsDir
                         : Path.Combine(pluginsDir, mod.ExtractTargetSubPath);
@@ -601,7 +650,26 @@ namespace SlafightInstaller.Games.STRAFTAT
                 }
                 else
                 {
-                    var finalDst = Path.Combine(pluginsDir, fileName);
+                    // DLL: DLL名を整えて plugins 直下へ
+                    var dllName = Path.GetFileNameWithoutExtension(tmpName);
+                    if (string.IsNullOrEmpty(dllName))
+                        dllName = mod.ModName;
+                    dllName += ".dll";
+
+                    var finalDst = Path.Combine(pluginsDir, dllName);
+
+                    if (File.Exists(finalDst))
+                    {
+                        ConsoleUI.Prompt(Messages.Get("OverwriteAsk"));
+                        var ans = Console.ReadLine()?.Trim().ToLower();
+                        if (ans != "y")
+                        {
+                            ConsoleUI.Warn(Messages.Get("OverwriteSkip"));
+                            return;
+                        }
+                    }
+
+                    ConsoleUI.Info($"Copying {mod.ModName} to {finalDst}");
                     File.Copy(tmpFile, finalDst, overwrite: true);
                 }
             }
@@ -664,8 +732,9 @@ namespace SlafightInstaller.Games.STRAFTAT
                 var pluginsDir = Path.Combine(gamePath, "BepInEx", "plugins");
                 var removed = false;
 
-                var fileName = mod.InstallFileName ?? Path.GetFileName(mod.SourceUrl);
-                var isZip = fileName?.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) == true;
+                var originalName = mod.InstallFileName ?? Path.GetFileName(mod.SourceUrl);
+                var isZip = !string.IsNullOrEmpty(originalName) &&
+                            originalName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
 
                 if (isZip)
                 {
@@ -678,17 +747,29 @@ namespace SlafightInstaller.Games.STRAFTAT
                             removed = true;
                         }
                     }
+                    else
+                    {
+                        // SubPathなしZIP → Mod名DLLを削除
+                        var dllPattern = mod.ModName + "*.dll";
+                        var files = Directory.GetFiles(pluginsDir, dllPattern, SearchOption.AllDirectories);
+                        foreach (var f in files)
+                        {
+                            File.Delete(f);
+                            removed = true;
+                        }
+                    }
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(fileName))
+                    var baseName = string.IsNullOrEmpty(originalName)
+                        ? mod.ModName
+                        : Path.GetFileNameWithoutExtension(originalName);
+                    var dllName = baseName + ".dll";
+                    var filePath = Path.Combine(pluginsDir, dllName);
+                    if (File.Exists(filePath))
                     {
-                        var filePath = Path.Combine(pluginsDir, fileName);
-                        if (File.Exists(filePath))
-                        {
-                            File.Delete(filePath);
-                            removed = true;
-                        }
+                        File.Delete(filePath);
+                        removed = true;
                     }
                 }
 
