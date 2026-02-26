@@ -30,6 +30,15 @@ namespace SlafightInstaller.Games.STRAFTAT
             },
             new ModBase
             {
+                ModName = "Chat Commands",
+                ModVersion = "1.2.7",
+                ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
+                ConflictsWith = new List<string>(),
+                SourceUrl = "https://gcdn.thunderstore.io/live/blob-storage/sha256/df196fad52ebf98ea5fdbfe7ee0118e67a5e650d3ff01f1b9b8a50528e8176bc.sh_oBz6Gj2.blob",
+                InstallFileName = "Chat_Commands.dll"
+            },
+            new ModBase
+            {
                 ModName = "moreStrafts",
                 ModVersion = "0.0.4",
                 ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
