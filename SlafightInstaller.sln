@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlafightInstaller", "SlafightInstaller\SlafightInstaller.csproj", "{6BFFB2B6-E9C4-4108-BACC-441F94F0FBC9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlafightInstaller.Updater", "SlafightInstaller.Updater\SlafightInstaller.Updater.csproj", "{D06B2F42-BDE0-4D3C-819A-F8595CDB3E96}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{6BFFB2B6-E9C4-4108-BACC-441F94F0FBC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BFFB2B6-E9C4-4108-BACC-441F94F0FBC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BFFB2B6-E9C4-4108-BACC-441F94F0FBC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D06B2F42-BDE0-4D3C-819A-F8595CDB3E96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D06B2F42-BDE0-4D3C-819A-F8595CDB3E96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D06B2F42-BDE0-4D3C-819A-F8595CDB3E96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D06B2F42-BDE0-4D3C-819A-F8595CDB3E96}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

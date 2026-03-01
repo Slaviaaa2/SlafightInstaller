@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 
-namespace SlafightInstaller.InstallUtils;
+namespace SlafightInstaller.Utils;
 
 public static class BepInExInstallUtils
 {

@@ -12,6 +12,7 @@ namespace SlafightInstaller
         public string? InstallSubPath;
         public string? ExtractTargetSubPath;
         public string? InstallFileName;
+        public string? FinalPath;
 
         public override string ToString()
         {

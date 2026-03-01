@@ -66,6 +66,13 @@ namespace SlafightInstaller
             Console.Write(message);
             Console.ResetColor();
         }
+        
+        public static void Debug(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write(message);
+            Console.ResetColor();
+        }
 
         public static void Header(string message)
         {

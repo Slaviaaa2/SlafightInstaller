@@ -5,11 +5,11 @@
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{6BFFB2B6-E9C4-4108-BACC-441F94F0FBC9}</ProjectGuid>
+        <ProjectGuid>{D06B2F42-BDE0-4D3C-819A-F8595CDB3E96}</ProjectGuid>
         <OutputType>Exe</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>SlafightInstaller</RootNamespace>
-        <AssemblyName>SlafightInstaller</AssemblyName>
+        <RootNamespace>SlafightInstaller.Updater</RootNamespace>
+        <AssemblyName>SlafightInstaller.Updater</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
         <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -39,36 +39,11 @@
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
-        <Reference Include="System.IO.Compression" />
-        <Reference Include="System.IO.Compression.FileSystem" />
         <Reference Include="System.Xml"/>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="CommandParser.cs" />
-        <Compile Include="ConsoleUI.cs" />
-        <Compile Include="CustomModRegistry.cs" />
-        <Compile Include="Games\GameBase.cs" />
-        <Compile Include="Games\STRAFTAT.cs" />
-        <Content Include="README.txt">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Compile Include="UpdateChecker.cs" />
-        <Compile Include="Utils\BackupUtils.cs" />
-        <Compile Include="Utils\BasicUtils.cs" />
-        <Compile Include="Utils\BepInExInstallUtils.cs" />
-        <Compile Include="Localisation.cs" />
         <Compile Include="Program.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="Structs.cs" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Games\STRAFTAT\" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\SlafightInstaller.Updater\SlafightInstaller.Updater.csproj">
-        <Project>{d06b2f42-bde0-4d3c-819a-f8595cdb3e96}</Project>
-        <Name>SlafightInstaller.Updater</Name>
-      </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

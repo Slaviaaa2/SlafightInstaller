@@ -16,18 +16,18 @@ namespace SlafightInstaller
         public static List<ParsedCommand> Parse(string input)
         {
             var result = new List<ParsedCommand>();
-            var parts = input.Split(new[] { "&&" }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = input.Split(["&&"], StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var part in parts)
             {
                 var tokens = part.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (tokens.Length < 2) continue;
+                if (tokens.Length == 0) continue;
                 if (!tokens[0].StartsWith("@")) continue;
 
                 var cmd = new ParsedCommand
                 {
                     Namespace = tokens[0].TrimStart('@'),
-                    Action = tokens[1],
+                    Action    = tokens.Length >= 2 ? tokens[1] : string.Empty,
                 };
 
                 for (var i = 2; i < tokens.Length; i++)

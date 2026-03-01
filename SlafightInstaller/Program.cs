@@ -2,20 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SlafightInstaller.Games.STRAFTAT;
+using SlafightInstaller.Games;
+using SlafightInstaller.Utils;
 
 namespace SlafightInstaller
 {
     public static class Program
     {
-        public static List<string> games = new() { "STRAFTAT" };
+        // 管理対象ゲーム一覧（ID → GameBase）
+        public static readonly Dictionary<string, GameBase> Games = new()
+        {
+            { "STRAFTAT", new STRAFTAT() }
+        };
+
         public static string? CurrentGame { get; set; }
         public static string? CurrentGamePath { get; set; }
 
         public static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
-            Console.InputEncoding = Encoding.UTF8;
+            Console.InputEncoding  = Encoding.UTF8;
+            
+            ConsoleUI.Debug($"Launching System...\n" +
+                            $"Author: Slaviaaa2, Version: {UpdateChecker.CurrentVersion}, OperatingSystem: {Environment.OSVersion.Platform}, Is 64bit: {Environment.Is64BitOperatingSystem}\n\n");
 
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
             {
@@ -31,17 +40,22 @@ namespace SlafightInstaller
                 return;
             }
 
-            Console.Write("Language / 言語 (en/jp) > ");
-            var langInput = Console.ReadLine()?.Trim().ToLower();
-            Messages.Current = langInput == "jp" ? Lang.Jp : Lang.En;
+            // カスタムMODを起動時に自動ロード
+            CustomModRegistry.Load();
 
+            Console.Write("Language / 言語 (en/jp) > ");
+            var langInput   = Console.ReadLine()?.Trim().ToLower();
+            Messages.Current = langInput == "jp" ? Lang.Jp : Lang.En;
+            
             ConsoleUI.Header(Messages.Get("Welcome"));
+            
+            UpdateChecker.CheckForUpdates();
 
             // 起動引数にコマンドがある場合はそのまま実行
             if (args.Length > 0)
             {
                 var argLine = string.Join(" ", args);
-                ExecuteCommandLine(argLine, autoYes: false);
+                ExecuteCommandLine(argLine, autoYes: false, noBackup: false);
                 BasicUtils.EndScreen();
                 return;
             }
@@ -50,23 +64,21 @@ namespace SlafightInstaller
             {
                 ConsoleUI.Divider();
                 ConsoleUI.Info(Messages.Get("SelectGame"));
-                foreach (var g in games)
+                foreach (var g in Games.Keys)
                     ConsoleUI.Info($"  · {g}");
                 ConsoleUI.Divider();
                 ConsoleUI.Info(Messages.Get("CommandHint"));
                 ConsoleUI.Prompt(Messages.Get("GameName"));
                 var userInput = Console.ReadLine()?.Trim();
 
-                if (userInput?.ToLower() == "exit")
-                    break;
+                if (userInput?.ToLower() == "exit") break;
 
-                // CLIモード移行
                 if (userInput?.ToLower() == ".join cli")
                 {
                     RunCliMode();
                     continue;
                 }
-                
+
                 if (userInput?.ToLower() == "help")
                 {
                     ConsoleUI.Header(Messages.Get("HelpTitle"));
@@ -76,30 +88,26 @@ namespace SlafightInstaller
 
                 if (CommandParser.IsCommand(userInput))
                 {
-                    ExecuteCommandLine(userInput!, autoYes: false);
+                    ExecuteCommandLine(userInput!, autoYes: false, noBackup: false);
                     continue;
                 }
 
-                if (!games.Contains(userInput))
+                if (userInput == null || !Games.ContainsKey(userInput))
                 {
                     ConsoleUI.Error(Messages.Get("InvalidGame"));
                     continue;
                 }
 
-                switch (userInput)
-                {
-                    case "STRAFTAT":
-                        STRAFTAT.Entry();
-                        break;
-                }
+                CurrentGame     = userInput;
+                CurrentGamePath = null; // 対話モードでは毎回入力させる運用なら null のまま
+
+                var game = Games[userInput];
+                game.Entry();  // 対話モード
             }
 
             BasicUtils.EndScreen();
         }
 
-        /// <summary>
-        /// 完全コマンドモード。exitで通常モードに戻る。
-        /// </summary>
         private static void RunCliMode()
         {
             ConsoleUI.Header("CLI Mode");
@@ -115,7 +123,6 @@ namespace SlafightInstaller
                     ConsoleUI.Info("Exiting CLI mode.");
                     return;
                 }
-
                 if (string.IsNullOrEmpty(input)) continue;
 
                 if (input.ToLower() == "help")
@@ -131,117 +138,47 @@ namespace SlafightInstaller
                     continue;
                 }
 
-                ExecuteCommandLine(input, autoYes: false);
+                ExecuteCommandLine(input, autoYes: false, noBackup: false);
             }
         }
 
-        private static void ExecuteCommandLine(string input, bool autoYes)
+        private static void ExecuteCommandLine(string input, bool autoYes, bool noBackup)
         {
             var commands = CommandParser.Parse(input);
-            if (commands.Count == 0)
-            {
-                ConsoleUI.Error("Invalid command.");
-                return;
-            }
+            if (commands.Count == 0) { ConsoleUI.Error("Invalid command."); return; }
 
-            string? selectedGame = null;
+            string? selectedGame     = null;
             string? selectedGamePath = null;
-            var installQueue = new List<string>();
-            var removeQueue = new List<string>();
+            var installQueue         = new List<string>();
+            var removeQueue          = new List<string>();
 
             foreach (var cmd in commands)
             {
-                if (cmd.Namespace != "game")
+                if (cmd.Flags.Contains("y"))         autoYes  = true;
+                if (cmd.Flags.Contains("no-backup")) noBackup = true;
+
+                if (cmd.Namespace == "game")
+                {
+                    if (!HandleGameCommand(cmd, ref selectedGame, ref selectedGamePath,
+                            ref installQueue, ref removeQueue, autoYes, noBackup))
+                        return;
+                }
+                else if (cmd.Namespace == "mod")
+                {
+                    if (!HandleModCommand(cmd)) return;
+                }
+                else
                 {
                     ConsoleUI.Error($"Unknown namespace: @{cmd.Namespace}");
                     return;
                 }
-
-                if (cmd.Flags.Contains("y"))
-                    autoYes = true;
-
-                switch (cmd.Action.ToLower())
-                {
-                    case "sel":
-                        if (cmd.Args.Count < 1)
-                        {
-                            ConsoleUI.Error("Usage: @game sel <GameName> [GamePath]");
-                            return;
-                        }
-                        selectedGame = cmd.Args[0];
-                        if (!games.Contains(selectedGame))
-                        {
-                            ConsoleUI.Error($"Unknown game: {selectedGame}");
-                            return;
-                        }
-                        CurrentGame = selectedGame;
-                        if (cmd.Args.Count >= 2)
-                        {
-                            selectedGamePath = string.Join(" ", cmd.Args.Skip(1));
-                            CurrentGamePath = selectedGamePath;
-                        }
-                        ConsoleUI.Success($"Selected {selectedGame} ({CurrentGamePath ?? "path pending"})");
-                        break;
-
-                    case "-install":
-                        if (cmd.Args.Count < 1)
-                        {
-                            ConsoleUI.Error("Usage: @game -install <ModName|@all> [--y]");
-                            return;
-                        }
-                        installQueue.AddRange(cmd.Args);
-                        break;
-
-                    case "-remove":
-                        if (cmd.Args.Count < 1)
-                        {
-                            ConsoleUI.Error("Usage: @game -remove <ModName> [--y]");
-                            return;
-                        }
-    
-                        foreach (var arg in cmd.Args)
-                        {
-                            if (arg.ToLower() == "@all")
-                            {
-                                // @all 時は現在インストールされているものだけ
-                                removeQueue.AddRange(
-                                    STRAFTAT.GetInstalledModNames() // ← 後述のヘルパー or InstalledMods.Keysを直接
-                                );
-                            }
-                            else
-                            {
-                                removeQueue.Add(arg);
-                            }
-                        }
-                        break;
-
-                    case "-backup":
-                        if (selectedGamePath == null)
-                        {
-                            ConsoleUI.Error("Game path not set. Use @game sel first.");
-                            return;
-                        }
-                        BackupUtils.Backup(selectedGamePath);
-                        break;
-
-                    default:
-                        ConsoleUI.Error($"Unknown action: {cmd.Action}");
-                        return;
-                }
             }
 
-            // gamePathが未設定なら対話入力
-            if (selectedGame != null && selectedGamePath == null
-                && (installQueue.Count > 0 || removeQueue.Count > 0))
-            {
-                ConsoleUI.Prompt(Messages.Get("EnterGamePath"));
-                selectedGamePath = Console.ReadLine()?.Trim();
-            }
+            if (installQueue.Count == 0 && removeQueue.Count == 0) return;
 
             if (selectedGame == null)
             {
-                // 直前の sel がこの行では無かった場合 → グローバル状態を使う
-                selectedGame = CurrentGame;
+                selectedGame     = CurrentGame;
                 selectedGamePath ??= CurrentGamePath;
                 if (selectedGame == null)
                 {
@@ -250,18 +187,189 @@ namespace SlafightInstaller
                 }
             }
 
-            switch (selectedGame)
+            if (!Games.TryGetValue(selectedGame, out var gameInstance))
             {
-                case "STRAFTAT":
-                    STRAFTAT.Entry(
-                        preselectedGamePath: selectedGamePath,
-                        commandQueue: installQueue.Count > 0 ? installQueue : null,
-                        removeQueue: removeQueue.Count > 0 ? removeQueue : null,
-                        autoYes: autoYes,
-                        isCli: true  // CLIフラグON
-                    );
-                    break;
+                ConsoleUI.Error($"Unknown game: {selectedGame}");
+                return;
             }
+
+            if (selectedGamePath == null)
+            {
+                ConsoleUI.Prompt(Messages.Get("EnterGamePath"));
+                selectedGamePath = Console.ReadLine()?.Trim();
+            }
+
+            CurrentGame     = selectedGame;
+            CurrentGamePath = selectedGamePath;
+
+            gameInstance.Entry(
+                preselectedGamePath: selectedGamePath,
+                commandQueue: installQueue.Count > 0 ? installQueue : null,
+                removeQueue:  removeQueue.Count  > 0 ? removeQueue  : null,
+                autoYes:   autoYes,
+                noBackup:  noBackup,
+                isCli:     true
+            );
+        }
+
+        // -----------------------------------------------------------------------
+        // @game
+        // -----------------------------------------------------------------------
+        private static bool HandleGameCommand(
+            CommandParser.ParsedCommand cmd,
+            ref string? selectedGame,
+            ref string? selectedGamePath,
+            ref List<string> installQueue,
+            ref List<string> removeQueue,
+            bool autoYes, bool noBackup)
+        {
+            if (string.IsNullOrEmpty(cmd.Action))
+            {
+                ConsoleUI.Info(Messages.Get("HelpGame"));
+                return true;
+            }
+
+            switch (cmd.Action.ToLower())
+            {
+                case "sel":
+                    if (cmd.Args.Count < 1) { ConsoleUI.Info(Messages.Get("HelpGameSel")); return true; }
+                    selectedGame = cmd.Args[0];
+                    if (!Games.ContainsKey(selectedGame))
+                    {
+                        ConsoleUI.Error($"Unknown game: {selectedGame}");
+                        return false;
+                    }
+                    CurrentGame = selectedGame;
+                    if (cmd.Args.Count >= 2)
+                    {
+                        selectedGamePath = string.Join(" ", cmd.Args.Skip(1));
+                        CurrentGamePath  = selectedGamePath;
+                    }
+                    ConsoleUI.Success($"Selected {selectedGame} ({CurrentGamePath ?? "path pending"})");
+                    break;
+
+                case "-install":
+                    if (cmd.Args.Count < 1) { ConsoleUI.Info(Messages.Get("HelpGameInstall")); return true; }
+                    installQueue.AddRange(cmd.Args);
+                    break;
+
+                case "-remove":
+                    if (cmd.Args.Count < 1) { ConsoleUI.Info(Messages.Get("HelpGameRemove")); return true; }
+                    foreach (var arg in cmd.Args)
+                    {
+                        if (arg.ToLower() == "@all")
+                        {
+                            if (selectedGame != null && Games.TryGetValue(selectedGame, out var game))
+                                removeQueue.AddRange(game.GetInstalledModNames());
+                            else
+                                ConsoleUI.Warn("Game is not selected for '@game -remove @all'.");
+                        }
+                        else
+                        {
+                            removeQueue.Add(arg);
+                        }
+                    }
+                    break;
+
+                case "-backup":
+                    var path = selectedGamePath ?? CurrentGamePath;
+                    if (path == null) { ConsoleUI.Info(Messages.Get("HelpGameBackup")); return true; }
+                    BackupUtils.Backup(path);
+                    break;
+
+                default:
+                    ConsoleUI.Error($"Unknown @game action: '{cmd.Action}'");
+                    ConsoleUI.Info(Messages.Get("HelpGame"));
+                    return false;
+            }
+            return true;
+        }
+
+        // -----------------------------------------------------------------------
+        // @mod
+        // -----------------------------------------------------------------------
+        private static bool HandleModCommand(CommandParser.ParsedCommand cmd)
+        {
+            if (string.IsNullOrEmpty(cmd.Action))
+            {
+                ConsoleUI.Info(Messages.Get("HelpMod"));
+                return true;
+            }
+
+            switch (cmd.Action.ToLower())
+            {
+                case "list":
+                    CustomModRegistry.PrintList();
+                    break;
+
+                case "reload":
+                    CustomModRegistry.Load();
+                    break;
+
+                case "add":
+                    if (cmd.Args.Count < 3) { ConsoleUI.Info(Messages.Get("HelpModAdd")); return true; }
+                    var newMod = new ModBase
+                    {
+                        ModName              = cmd.Args[0],
+                        ModVersion           = cmd.Args[1],
+                        SourceUrl            = cmd.Args[2],
+                        InstallFileName      = cmd.Args.Count > 3 ? cmd.Args[3] : null,
+                        InstallSubPath       = cmd.Args.Count > 4 ? cmd.Args[4] : null,
+                        ExtractTargetSubPath = cmd.Args.Count > 5 ? cmd.Args[5] : null,
+                        ModDependencies      = new List<ModDependency>(),
+                        ConflictsWith        = new List<string>(),
+                        FinalPath            = null
+                    };
+                    CustomModRegistry.AddOrUpdate(newMod);
+                    ConsoleUI.Success($"Custom mod '{newMod.ModName}' registered.");
+                    break;
+
+                case "remove":
+                    if (cmd.Args.Count < 1) { ConsoleUI.Info(Messages.Get("HelpModRemove")); return true; }
+                    if (CustomModRegistry.Remove(cmd.Args[0]))
+                        ConsoleUI.Success($"Custom mod '{cmd.Args[0]}' removed.");
+                    else
+                        ConsoleUI.Warn($"Custom mod '{cmd.Args[0]}' not found.");
+                    break;
+
+                case "update":
+                    if (cmd.Args.Count < 3) { ConsoleUI.Info(Messages.Get("HelpModUpdate")); return true; }
+                    return UpdateCustomMod(cmd.Args[0], cmd.Args[1], string.Join(" ", cmd.Args.Skip(2)));
+
+                default:
+                    ConsoleUI.Error($"Unknown @mod action: '{cmd.Action}'");
+                    ConsoleUI.Info(Messages.Get("HelpMod"));
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool UpdateCustomMod(string modName, string field, string value)
+        {
+            var mod = CustomModRegistry.CustomMods.FirstOrDefault(m => m.ModName == modName);
+            if (mod.ModName == null)
+            {
+                ConsoleUI.Error($"Custom mod '{modName}' not found. Use '@mod add' first.");
+                return false;
+            }
+
+            var updated = mod;
+            switch (field.ToLower())
+            {
+                case "version":              updated.ModVersion           = value; break;
+                case "url":                  updated.SourceUrl            = value; break;
+                case "installfilename":      updated.InstallFileName      = value == "null" ? null : value; break;
+                case "installsubpath":       updated.InstallSubPath       = value == "null" ? null : value; break;
+                case "extracttargetsubpath": updated.ExtractTargetSubPath = value == "null" ? null : value; break;
+                case "finalpath":            updated.FinalPath            = value == "null" ? null : value; break;
+                default:
+                    ConsoleUI.Error($"Unknown field: '{field}'");
+                    ConsoleUI.Info(Messages.Get("HelpModUpdate"));
+                    return false;
+            }
+            CustomModRegistry.AddOrUpdate(updated);
+            ConsoleUI.Success($"Updated '{modName}'.{field} = {value}");
+            return true;
         }
     }
 }

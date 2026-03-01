@@ -1,8 +1,7 @@
 using System;
 using System.IO;
-using System.IO.Compression;
 
-namespace SlafightInstaller
+namespace SlafightInstaller.Utils
 {
     public static class BackupUtils
     {
@@ -27,16 +26,12 @@ namespace SlafightInstaller
             try
             {
                 var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                var backupDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                    "SlafightInstaller", "Backups"
-                );
-                Directory.CreateDirectory(backupDir);
-
-                var backupPath = Path.Combine(backupDir, $"STRAFTAT_backup_{timestamp}.zip");
+                var parentDir = Path.GetDirectoryName(gamePath)!;
+                var folderName = Path.GetFileName(gamePath);
+                var backupPath = Path.Combine(parentDir, $"{folderName}_backup_{timestamp}");
 
                 ConsoleUI.Info(string.Format(Messages.Get("BackupCreating"), backupPath));
-                ZipFile.CreateFromDirectory(gamePath, backupPath, CompressionLevel.Fastest, false);
+                CopyDirectory(gamePath, backupPath);
                 ConsoleUI.Success(string.Format(Messages.Get("BackupSuccess"), backupPath));
                 return true;
             }
@@ -44,6 +39,23 @@ namespace SlafightInstaller
             {
                 ConsoleUI.Error(string.Format(Messages.Get("BackupFailed"), ex.Message));
                 return false;
+            }
+        }
+
+        private static void CopyDirectory(string sourceDir, string destDir)
+        {
+            Directory.CreateDirectory(destDir);
+
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                var destFile = Path.Combine(destDir, Path.GetFileName(file));
+                File.Copy(file, destFile, overwrite: true);
+            }
+
+            foreach (var subDir in Directory.GetDirectories(sourceDir))
+            {
+                var destSubDir = Path.Combine(destDir, Path.GetFileName(subDir));
+                CopyDirectory(subDir, destSubDir);
             }
         }
     }
