@@ -16,10 +16,17 @@ namespace SlafightInstaller
 
         public override string ToString()
         {
-            var deps = (ModDependencies != null && ModDependencies.Count > 0)
-                ? $" (Deps: {string.Join(", ", ModDependencies)})"
-                : "";
-            return $"{ModName} {ModVersion}{deps}";
+            try
+            {
+                var deps = (ModDependencies != null && ModDependencies.Count > 0)
+                    ? $" (Deps: {string.Join(", ", ModDependencies)})"
+                    : "";
+                return $"{ModName} {ModVersion}{deps}";
+            }
+            catch
+            {
+                return $"{ModName} {ModVersion}";
+            }
         }
     }
     public struct ModDependency
