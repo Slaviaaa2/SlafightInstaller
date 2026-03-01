@@ -49,7 +49,9 @@
         <Compile Include="CustomModRegistry.cs" />
         <Compile Include="Games\GameBase.cs" />
         <Compile Include="Games\STRAFTAT.cs" />
-        <Content Include="LICENSE.txt" />
+        <Content Include="LICENSE.txt">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
         <Content Include="README.txt">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>

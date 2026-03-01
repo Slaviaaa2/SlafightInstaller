@@ -14,7 +14,7 @@ namespace SlafightInstaller
             "https://api.github.com/repos/Slaviaaa2/SlafightInstaller/releases/latest";
 
         // 数値バージョン（ここだけ手動で上げる）
-        public static readonly Version CurrentVersion = new Version(2, 1, 0, 1);
+        public static readonly Version CurrentVersion = new Version(2, 1, 0, 2);
 
         public static string GetCurrentVersionDisplay()
         {
@@ -41,7 +41,7 @@ namespace SlafightInstaller
                         var tagName    = ExtractString(json, "tag_name");
                         var htmlUrl    = ExtractString(json, "html_url");
                         var prerelease = ExtractBool(json, "prerelease");
-                        var assetUrl   = ExtractFirstAssetDownloadUrl(json);
+                        var assetUrl = ExtractAssetDownloadUrlByName(json, "UpdateFile.exe");
 
                         if (string.IsNullOrEmpty(tagName))
                             return;
@@ -205,7 +205,7 @@ namespace SlafightInstaller
             return string.Equals(m.Groups[1].Value, "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string ExtractFirstAssetDownloadUrl(string json)
+        private static string ExtractAssetDownloadUrlByName(string json, string targetName)
         {
             var idxAssets = json.IndexOf("\"assets\"", StringComparison.OrdinalIgnoreCase);
             if (idxAssets < 0) return "";
@@ -218,8 +218,27 @@ namespace SlafightInstaller
 
             var assetsBlock = json.Substring(idxBracket, endBracket - idxBracket + 1);
 
-            var m = Regex.Match(assetsBlock, "\"browser_download_url\"\\s*:\\s*\"(.*?)\"");
-            return m.Success ? UnescapeJsonString(m.Groups[1].Value) : "";
+            // 各アセットごとに name と browser_download_url を見たいので、
+            // ざっくり {"id": ... } 単位で split する例（雑だけど動く系）
+            var matches = Regex.Matches(assetsBlock, "{(.*?)}", RegexOptions.Singleline);
+            foreach (Match m in matches)
+            {
+                var block = m.Value;
+
+                var nameMatch = Regex.Match(block, "\"name\"\\s*:\\s*\"(.*?)\"");
+                if (!nameMatch.Success) continue;
+
+                var name = UnescapeJsonString(nameMatch.Groups[1].Value);
+                if (!string.Equals(name, targetName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var urlMatch = Regex.Match(block, "\"browser_download_url\"\\s*:\\s*\"(.*?)\"");
+                if (!urlMatch.Success) continue;
+
+                return UnescapeJsonString(urlMatch.Groups[1].Value);
+            }
+
+            return "";
         }
 
         private static int FindMatchingBracket(string s, int open)
