@@ -14,7 +14,7 @@ namespace SlafightInstaller
             "https://api.github.com/repos/Slaviaaa2/SlafightInstaller/releases/latest";
 
         // 数値バージョン（ここだけ手動で上げる）
-        public static readonly Version CurrentVersion = new Version(2, 1);
+        public static readonly Version CurrentVersion = new Version(2, 1, 0, 1);
 
         public static string GetCurrentVersionDisplay()
         {
