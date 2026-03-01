@@ -5,11 +5,10 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("SlafightInstaller")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Licensed under the Unlicense. See LICENSE file for details.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Slaviaaa2")]
 [assembly: AssemblyProduct("SlafightInstaller")]
-[assembly: AssemblyCopyright("Copyright © Slaviaaa2 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
