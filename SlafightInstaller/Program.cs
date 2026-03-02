@@ -24,7 +24,8 @@ namespace SlafightInstaller
             Console.InputEncoding  = Encoding.UTF8;
 
             ConsoleUI.Debug($"Launching System...\n" +
-                            $"Author: Slaviaaa2, Version: {UpdateChecker.CurrentVersion}, OperatingSystem: {Environment.OSVersion.Platform}, Is 64bit: {Environment.Is64BitOperatingSystem}\n\n");
+                            $"Author: Slaviaaa2, Version: {UpdateChecker.GetCurrentVersionDisplay()}, OperatingSystem: {Environment.OSVersion.Platform}, Is 64bit: {Environment.Is64BitOperatingSystem}\n",
+                true);
 
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
             {
