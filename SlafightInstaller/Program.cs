@@ -18,6 +18,10 @@ namespace SlafightInstaller
         public static string? CurrentGame { get; set; }
         public static string? CurrentGamePath { get; set; }
 
+        /// <summary>ゲーム名を大文字小文字無視で解決。見つからなければ null。</summary>
+        public static string? ResolveGameName(string? input)
+            => Games.FirstOrDefault(g => g.Equals(input, StringComparison.OrdinalIgnoreCase));
+
         public static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
@@ -41,12 +45,22 @@ namespace SlafightInstaller
                 return;
             }
 
-            // カスタムMODを起動時に自動ロード
+            // 設定とカスタムMODを起動時に自動ロード
+            Config.Load();
             CustomModRegistry.Load();
 
-            Console.Write("Language / 言語 (en/jp) > ");
-            var langInput    = Console.ReadLine()?.Trim().ToLower();
-            Messages.Current = langInput == "jp" ? Lang.Jp : Lang.En;
+            if (Config.Language != null)
+            {
+                Messages.Current = Config.Language == "jp" ? Lang.Jp : Lang.En;
+            }
+            else
+            {
+                Console.Write("Language / 言語 (en/jp) > ");
+                var langInput    = Console.ReadLine()?.Trim().ToLower();
+                Messages.Current = langInput == "jp" ? Lang.Jp : Lang.En;
+                Config.Language  = langInput == "jp" ? "jp" : "en";
+                Config.Save();
+            }
 
             ConsoleUI.Header(Messages.Get("Welcome"));
 
@@ -61,55 +75,73 @@ namespace SlafightInstaller
                 return;
             }
 
-            while (true)
+            // ゲームが1つだけなら自動選択
+            if (Games.Count == 1)
             {
-                ConsoleUI.Divider();
-                ConsoleUI.Info(Messages.Get("SelectGame"));
-                foreach (var g in Games)
-                    ConsoleUI.Info($"  · {g}");
-                ConsoleUI.Divider();
-                ConsoleUI.Info(Messages.Get("CommandHint"));
-                ConsoleUI.Prompt(Messages.Get("GameName"));
-                var userInput = Console.ReadLine()?.Trim();
+                CurrentGame = Games[0];
+                ConsoleUI.Info(string.Format(Messages.Get("SingleGameAutoSelect"), CurrentGame));
 
-                if (userInput?.ToLower() == "exit") break;
-
-                if (userInput?.ToLower() == ".join cli")
-                {
-                    RunCliMode();
-                    continue;
-                }
-
-                if (userInput?.ToLower() == "help")
-                {
-                    ConsoleUI.Header(Messages.Get("HelpTitle"));
-                    ConsoleUI.Info(Messages.Get("HelpNormal"));
-                    continue;
-                }
-
-                if (CommandParser.IsCommand(userInput))
-                {
-                    ExecuteCommandLine(userInput!, autoYes: false, noBackup: false);
-                    continue;
-                }
-
-                if (userInput == null || !Games.Contains(userInput))
-                {
-                    ConsoleUI.Error(Messages.Get("InvalidGame"));
-                    continue;
-                }
-
-                CurrentGame     = userInput;
-                CurrentGamePath = null; // 対話モードでは毎回入力させる
-
-                // 静的 STRAFTAT を起動
-                if (userInput == "STRAFTAT")
+                if (CurrentGame.Equals("STRAFTAT", StringComparison.OrdinalIgnoreCase))
                     STRAFTAT.Entry(preselectedGamePath: null,
                                    commandQueue: null,
                                    removeQueue: null,
                                    autoYes: false,
                                    noBackup: false,
                                    isCli: false);
+            }
+            else
+            {
+                // 複数ゲーム対応時のためにゲーム選択ループを残す
+                while (true)
+                {
+                    ConsoleUI.Divider();
+                    ConsoleUI.Info(Messages.Get("SelectGame"));
+                    foreach (var g in Games)
+                        ConsoleUI.Info($"  · {g}");
+                    ConsoleUI.Divider();
+                    ConsoleUI.Info(Messages.Get("CommandHint"));
+                    ConsoleUI.Prompt(Messages.Get("GameName"));
+                    var userInput = Console.ReadLine()?.Trim();
+
+                    if (userInput?.ToLower() == "exit") break;
+
+                    if (userInput?.ToLower() == ".join cli")
+                    {
+                        RunCliMode();
+                        continue;
+                    }
+
+                    if (userInput?.ToLower() == "help")
+                    {
+                        ConsoleUI.Header(Messages.Get("HelpTitle"));
+                        ConsoleUI.Info(Messages.Get("HelpNormal"));
+                        continue;
+                    }
+
+                    if (CommandParser.IsCommand(userInput))
+                    {
+                        ExecuteCommandLine(userInput!, autoYes: false, noBackup: false);
+                        continue;
+                    }
+
+                    var resolvedGame = ResolveGameName(userInput);
+                    if (resolvedGame == null)
+                    {
+                        ConsoleUI.Error(Messages.Get("InvalidGame"));
+                        continue;
+                    }
+
+                    CurrentGame     = resolvedGame;
+                    CurrentGamePath = null;
+
+                    if (resolvedGame.Equals("STRAFTAT", StringComparison.OrdinalIgnoreCase))
+                        STRAFTAT.Entry(preselectedGamePath: null,
+                                       commandQueue: null,
+                                       removeQueue: null,
+                                       autoYes: false,
+                                       noBackup: false,
+                                       isCli: false);
+                }
             }
 
             BasicUtils.EndScreen();
@@ -198,11 +230,13 @@ namespace SlafightInstaller
                 }
             }
 
-            if (!Games.Contains(selectedGame))
+            var resolved = ResolveGameName(selectedGame);
+            if (resolved == null)
             {
                 ConsoleUI.Error($"Unknown game: {selectedGame}");
                 return;
             }
+            selectedGame = resolved;
 
             if (selectedGamePath == null)
             {
@@ -214,7 +248,7 @@ namespace SlafightInstaller
             CurrentGamePath = selectedGamePath;
 
             // 今は STRAFTAT だけ想定
-            if (selectedGame == "STRAFTAT")
+            if (selectedGame.Equals("STRAFTAT", StringComparison.OrdinalIgnoreCase))
             {
                 STRAFTAT.Entry(
                     preselectedGamePath: selectedGamePath,
@@ -248,12 +282,13 @@ namespace SlafightInstaller
             {
                 case "sel":
                     if (cmd.Args.Count < 1) { ConsoleUI.Info(Messages.Get("HelpGameSel")); return true; }
-                    selectedGame = cmd.Args[0];
-                    if (!Games.Contains(selectedGame))
+                    var resolvedSel = ResolveGameName(cmd.Args[0]);
+                    if (resolvedSel == null)
                     {
-                        ConsoleUI.Error($"Unknown game: {selectedGame}");
+                        ConsoleUI.Error($"Unknown game: {cmd.Args[0]}");
                         return false;
                     }
+                    selectedGame = resolvedSel;
                     CurrentGame = selectedGame;
                     if (cmd.Args.Count >= 2)
                     {
@@ -274,10 +309,11 @@ namespace SlafightInstaller
                     {
                         if (arg.ToLower() == "@all")
                         {
-                            if (selectedGame != null && Games.Contains(selectedGame))
+                            var resolvedRm = ResolveGameName(selectedGame);
+                            if (resolvedRm != null)
                             {
                                 // 今は STRAFTAT だけ
-                                if (selectedGame == "STRAFTAT")
+                                if (resolvedRm.Equals("STRAFTAT", StringComparison.OrdinalIgnoreCase))
                                     removeQueue.AddRange(STRAFTAT.GetInstalledModNames());
                             }
                             else
@@ -367,7 +403,7 @@ namespace SlafightInstaller
 
         private static bool UpdateCustomMod(string modName, string field, string value)
         {
-            var mod = CustomModRegistry.CustomMods.FirstOrDefault(m => m.ModName == modName);
+            var mod = CustomModRegistry.CustomMods.FirstOrDefault(m => m.ModName.Equals(modName, StringComparison.OrdinalIgnoreCase));
             if (mod.ModName == null)
             {
                 ConsoleUI.Error($"Custom mod '{modName}' not found. Use '@mod add' first.");

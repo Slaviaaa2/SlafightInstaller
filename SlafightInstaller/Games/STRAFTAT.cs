@@ -158,6 +158,19 @@ namespace SlafightInstaller.Games
                 ExtractTargetSubPath = null,
                 FinalPath = null
             },
+            // ========= DANO Framework =========
+            new ModBase
+            {
+                ModName = "DANO",
+                ModVersion = "0.4.0",
+                ModDependencies = new List<ModDependency> { new ModDependency("BepInEx") },
+                ConflictsWith = new List<string>(),
+                SourceUrl = "https://github.com/Slaviaaa2/DANO/releases/latest/download/DANO.zip",
+                InstallFileName = "DANO.zip",
+                InstallSubPath = null,
+                ExtractTargetSubPath = "DANO",
+                FinalPath = "DANO/DANO.Core.dll"
+            },
             new ModBase
             {
                 ModName = "FreecamSpectate",
@@ -174,7 +187,7 @@ namespace SlafightInstaller.Games
 
         // ModName → (Version, InstalledFolderName or null)
         private static readonly Dictionary<string, (string Version, string? FolderName)> InstalledMods
-            = new Dictionary<string, (string, string?)>();
+            = new Dictionary<string, (string, string?)>(StringComparer.OrdinalIgnoreCase);
 
         private static string? _gamePath;
         private static bool _backupDone = false;
@@ -182,6 +195,10 @@ namespace SlafightInstaller.Games
 
         public static IEnumerable<string> GetInstalledModNames()
             => InstalledMods.Keys;
+
+        /// <summary>MOD 名を大文字小文字無視で検索。</summary>
+        private static ModBase FindMod(string? name)
+            => ModsList.FirstOrDefault(m => m.ModName != null && m.ModName.Equals(name, StringComparison.OrdinalIgnoreCase));
 
         public static void Entry(
             string? preselectedGamePath = null,
@@ -196,13 +213,28 @@ namespace SlafightInstaller.Games
             _noBackup = noBackup;
             _gamePath = preselectedGamePath ?? Program.CurrentGamePath;
 
+            // Config から保存済みパスを復元
+            if (string.IsNullOrEmpty(_gamePath))
+                _gamePath = Config.GetGamePath("STRAFTAT");
+
+            // Steam 自動検出
+            if (string.IsNullOrEmpty(_gamePath))
+            {
+                var detected = SteamDetector.FindGamePath("STRAFTAT");
+                if (detected != null)
+                {
+                    _gamePath = detected;
+                    ConsoleUI.Success(string.Format(Messages.Get("AutoDetected"), detected));
+                }
+            }
+
             if (!isCli)
                 ConsoleUI.Header("STRAFTAT Mod Installer");
 
             // カスタムMODをModsListにマージ（既存MODは上書き）
             foreach (var custom in CustomModRegistry.CustomMods)
             {
-                var idx = ModsList.FindIndex(m => m.ModName == custom.ModName);
+                var idx = ModsList.FindIndex(m => m.ModName.Equals(custom.ModName, StringComparison.OrdinalIgnoreCase));
                 if (idx >= 0)
                     ModsList[idx] = custom;
                 else
@@ -211,6 +243,7 @@ namespace SlafightInstaller.Games
 
             if (!isCli && string.IsNullOrEmpty(_gamePath))
             {
+                ConsoleUI.Info(Messages.Get("AutoDetectFailed"));
                 ConsoleUI.Prompt(Messages.Get("EnterGamePath"));
                 _gamePath = Console.ReadLine()?.Trim();
             }
@@ -224,6 +257,9 @@ namespace SlafightInstaller.Games
             if (!isCli)
                 ConsoleUI.Success($"Game found: {_gamePath}");
 
+            // パスを保存
+            Config.SetGamePath("STRAFTAT", _gamePath!);
+
             ScanInstalledMods(_gamePath!);
 
             if (isCli)
@@ -232,7 +268,7 @@ namespace SlafightInstaller.Games
                 {
                     foreach (var modName in removeQueue.Distinct())
                     {
-                        var mod = ModsList.FirstOrDefault(m => m.ModName == modName);
+                        var mod = FindMod(modName);
                         if (mod.ModName == null) continue;
                         RemoveMod(mod, _gamePath!, autoYes);
                     }
@@ -249,7 +285,7 @@ namespace SlafightInstaller.Games
             {
                 foreach (var modName in removeQueue)
                 {
-                    var mod = ModsList.FirstOrDefault(m => m.ModName == modName);
+                    var mod = FindMod(modName);
                     if (mod.ModName == null)
                     {
                         ConsoleUI.Error(string.Format(Messages.Get("RemoveNotFound"), modName));
@@ -275,50 +311,47 @@ namespace SlafightInstaller.Games
         {
             while (true)
             {
-                ConsoleUI.Divider();
-                ConsoleUI.Info(Messages.Get("SelectMode"));
-                ConsoleUI.Info("  · install");
-                ConsoleUI.Info("  · uninstall");
-                ConsoleUI.Divider();
-                ConsoleUI.Prompt(Messages.Get("ModePrompt"));
-                var mode = Console.ReadLine()?.Trim().ToLower();
+                PrintModList();
+                ConsoleUI.Info(Messages.Get("UnifiedHint"));
+                ConsoleUI.Prompt(Messages.Get("UnifiedPrompt"));
+                var userInput = Console.ReadLine()?.Trim();
 
-                if (mode == "exit") return;
-
-                switch (mode)
+                if (string.IsNullOrEmpty(userInput)) continue;
+                if (userInput.ToLower() == "exit") return;
+                if (userInput.ToLower() == "help")
                 {
-                    case "install":   RunInstallLoop();   break;
-                    case "uninstall": RunUninstallLoop(); break;
-                    default: ConsoleUI.Error(Messages.Get("InvalidMode")); break;
+                    ConsoleUI.Header(Messages.Get("HelpTitle"));
+                    ConsoleUI.Info(Messages.Get("HelpNormal"));
+                    continue;
                 }
-            }
-        }
 
-        private static void RunInstallLoop()
-        {
-            ConsoleUI.Header("Install Mode");
-            while (true)
-            {
-                PrintModList();
-                ConsoleUI.Info(Messages.Get("InstallExitHint"));
-                ConsoleUI.Prompt(Messages.Get("EnterModName"));
-                var userInput = Console.ReadLine()?.Trim();
-                if (userInput?.ToLower() == "exit") return;
-                ProcessModInput(userInput, autoYes: false);
-            }
-        }
+                if (CommandParser.IsCommand(userInput))
+                {
+                    Program.CurrentGamePath = _gamePath;
+                    // @game / @mod コマンドをそのまま処理
+                    continue;
+                }
 
-        private static void RunUninstallLoop()
-        {
-            ConsoleUI.Header("Uninstall Mode");
-            while (true)
-            {
-                PrintModList();
-                ConsoleUI.Info(Messages.Get("UninstallExitHint"));
-                ConsoleUI.Prompt(Messages.Get("EnterModName"));
-                var userInput = Console.ReadLine()?.Trim();
-                if (userInput?.ToLower() == "exit") return;
-                ProcessRemoveInput(userInput, autoYes: false);
+                // "uninstall <mod>" or "remove <mod>"
+                var lower = userInput.ToLower();
+                if (lower.StartsWith("uninstall ") || lower.StartsWith("remove "))
+                {
+                    var modName = userInput.Substring(userInput.IndexOf(' ') + 1).Trim();
+                    if (modName.ToLower() == "@all")
+                        ProcessRemoveInput("@all", autoYes: false);
+                    else
+                        ProcessRemoveInput(modName, autoYes: false);
+                    continue;
+                }
+
+                // "install <mod>" or bare mod name (defaults to install)
+                string installTarget;
+                if (lower.StartsWith("install "))
+                    installTarget = userInput.Substring("install ".Length).Trim();
+                else
+                    installTarget = userInput;
+
+                ProcessModInput(installTarget, autoYes: false);
             }
         }
 
@@ -359,7 +392,7 @@ namespace SlafightInstaller.Games
                 return;
             }
 
-            var selectedMod = ModsList.FirstOrDefault(m => m.ModName == userInput);
+            var selectedMod = FindMod(userInput);
             if (selectedMod.ModName == null)
             {
                 ConsoleUI.Error(Messages.Get("InvalidModName"));
@@ -385,7 +418,7 @@ namespace SlafightInstaller.Games
                 }
                 foreach (var name in installedNames)
                 {
-                    var mod = ModsList.FirstOrDefault(m => m.ModName == name);
+                    var mod = FindMod(name);
                     if (mod.ModName == null)
                     {
                         ConsoleUI.Warn($"{name} is marked as installed but not found in ModsList. Skipped.");
@@ -396,7 +429,7 @@ namespace SlafightInstaller.Games
                 return;
             }
 
-            var selectedMod = ModsList.FirstOrDefault(m => m.ModName == userInput);
+            var selectedMod = FindMod(userInput);
             if (selectedMod.ModName == null)
             {
                 ConsoleUI.Error(string.Format(Messages.Get("RemoveNotFound"), userInput));
@@ -418,7 +451,7 @@ namespace SlafightInstaller.Games
 
             foreach (var mod in ModsList)
             {
-                if (mod.ModName == "BepInEx") continue;
+                if (mod.ModName != null && mod.ModName.Equals("BepInEx", StringComparison.OrdinalIgnoreCase)) continue;
 
                 bool installed = false;
                 string? foundFolder = null;
@@ -506,7 +539,7 @@ namespace SlafightInstaller.Games
             }
 
             if (File.Exists(Path.Combine(gamePath, ".doorstop_version")))
-                InstalledMods["BepInEx"] = (ModsList.First(m => m.ModName == "BepInEx").ModVersion, null);
+                InstalledMods["BepInEx"] = (FindMod("BepInEx").ModVersion, null);
         }
 
         private static void TryInstallMod(ModBase selectedMod, bool autoYes)
@@ -569,7 +602,7 @@ namespace SlafightInstaller.Games
 
             foreach (var dep in mod.ModDependencies)
             {
-                var depMod = ModsList.FirstOrDefault(m => m.ModName == dep.ModName);
+                var depMod = FindMod(dep.ModName);
                 if (depMod.ModName == null) continue;
 
                 if (dep.RequiredVersion != null
@@ -593,7 +626,7 @@ namespace SlafightInstaller.Games
             {
                 foreach (var dep in mod.ModDependencies)
                 {
-                    var depMod = ModsList.FirstOrDefault(m => m.ModName == dep.ModName);
+                    var depMod = FindMod(dep.ModName);
                     if (depMod.ModName == null)
                         throw new InvalidOperationException($"Dependency '{dep.ModName}' not found for mod '{mod.ModName}'.");
                     InstallWithDependencies(depMod, gamePath);
@@ -607,7 +640,7 @@ namespace SlafightInstaller.Games
         {
             ConsoleUI.Info($"Installing {mod.ModName}@{mod.ModVersion} ...");
 
-            if (mod.ModName == "BepInEx")
+            if (mod.ModName.Equals("BepInEx", StringComparison.OrdinalIgnoreCase))
             {
                 var ok = BepInExInstallUtils.Install(gamePath, mod.ModVersion);
                 if (!ok) { ConsoleUI.Error("Failed to install BepInEx."); throw new Exception("BepInEx install failed."); }
@@ -703,7 +736,7 @@ namespace SlafightInstaller.Games
 
         private static void RemoveMod(ModBase mod, string gamePath, bool autoYes)
         {
-            if (mod.ModName == "BepInEx")
+            if (mod.ModName.Equals("BepInEx", StringComparison.OrdinalIgnoreCase))
             {
                 if (!autoYes)
                 {

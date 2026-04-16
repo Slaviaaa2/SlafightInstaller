@@ -44,6 +44,7 @@
         <Reference Include="System.Xml"/>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Config.cs" />
         <Compile Include="CommandParser.cs" />
         <Compile Include="ConsoleUI.cs" />
         <Compile Include="CustomModRegistry.cs" />
@@ -58,6 +59,7 @@
         <Compile Include="Utils\BackupUtils.cs" />
         <Compile Include="Utils\BasicUtils.cs" />
         <Compile Include="Utils\BepInExInstallUtils.cs" />
+        <Compile Include="Utils\SteamDetector.cs" />
         <Compile Include="Localisation.cs" />
         <Compile Include="Program.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>

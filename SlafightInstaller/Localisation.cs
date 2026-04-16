@@ -51,6 +51,8 @@ public static class Messages
         ["InvalidMode"]       = "Invalid mode. Please enter 'install' or 'uninstall'.",
         ["InstallExitHint"]   = "(type '@all' to install all, 'exit' to return to mode selection)",
         ["UninstallExitHint"] = "(type 'exit' to return to mode selection)",
+        ["UnifiedHint"]       = "(<mod> to install, 'uninstall <mod>', '@all' / 'uninstall @all', 'exit' to quit)",
+        ["UnifiedPrompt"]     = "> ",
 
         // ===== Top-level help =====
         ["HelpTitle"]  = "Available Commands",
@@ -222,6 +224,11 @@ public static class Messages
           File: %AppData%\SlafightInstaller\custom_mods.json
         """,
 
+        // ==== Auto Detection (EN) ==== //
+        ["AutoDetected"]        = "Auto-detected game at: {0}",
+        ["AutoDetectFailed"]    = "Could not auto-detect game path. Please enter manually.",
+        ["SingleGameAutoSelect"]= "Auto-selected game: {0}",
+
         // ==== Update Checker (EN) ==== //
         ["Update_Stable"]       = "A new version is available: {0} (current: {1})",
         ["Update_StableUrl"]    = "GitHub release page: {0}",
@@ -271,6 +278,8 @@ public static class Messages
         ["InvalidMode"]       = "無効なモードです。'install' または 'uninstall' を入力してください。",
         ["InstallExitHint"]   = "('@all' で全MODインストール、'exit' でモード選択に戻る)",
         ["UninstallExitHint"] = "('@all' で全MODアンインストール、'exit' でモード選択に戻る)",
+        ["UnifiedHint"]       = "(<MOD名> でインストール、'uninstall <MOD名>' で削除、'@all' / 'uninstall @all'、'exit' で終了)",
+        ["UnifiedPrompt"]     = "> ",
 
         // ===== トップレベルヘルプ =====
         ["HelpTitle"]  = "使用可能なコマンド",
@@ -442,6 +451,11 @@ public static class Messages
           ファイル場所:
             %AppData%\SlafightInstaller\custom_mods.json
         """,
+
+        // ==== Auto Detection (JP) ==== //
+        ["AutoDetected"]        = "ゲームを自動検出しました: {0}",
+        ["AutoDetectFailed"]    = "ゲームパスを自動検出できませんでした。手動で入力してください。",
+        ["SingleGameAutoSelect"]= "ゲームを自動選択しました: {0}",
 
         // ==== Update Checker (JP) ==== //
         ["Update_Stable"]       = "新しいバージョンがあります: {0} (現在: {1})",

@@ -66,7 +66,7 @@ namespace SlafightInstaller
         /// </summary>
         public static void AddOrUpdate(ModBase mod)
         {
-            var idx = _customMods.FindIndex(m => m.ModName == mod.ModName);
+            var idx = _customMods.FindIndex(m => m.ModName.Equals(mod.ModName, StringComparison.OrdinalIgnoreCase));
             if (idx >= 0)
                 _customMods[idx] = mod;
             else
@@ -79,7 +79,7 @@ namespace SlafightInstaller
         /// </summary>
         public static bool Remove(string modName)
         {
-            var idx = _customMods.FindIndex(m => m.ModName == modName);
+            var idx = _customMods.FindIndex(m => m.ModName.Equals(modName, StringComparison.OrdinalIgnoreCase));
             if (idx < 0) return false;
             _customMods.RemoveAt(idx);
             Save();

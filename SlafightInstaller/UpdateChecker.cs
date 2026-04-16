@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -15,7 +16,7 @@ namespace SlafightInstaller
             "https://api.github.com/repos/Slaviaaa2/SlafightInstaller/releases/latest";
 
         // ★手動管理（ここだけ編集）
-        public static readonly Version CurrentVersion = new Version(2, 1, 0, 4);
+        public static readonly Version CurrentVersion = new Version(2, 2, 0, 0);
         public static readonly bool IsCurrentBeta = false;   // true=pre-release
         public static readonly bool IsCurrentDev = false;    // true=開発版（更新無視）
 
@@ -70,7 +71,11 @@ namespace SlafightInstaller
                         var tagName    = ExtractString(json, "tag_name");
                         var htmlUrl    = ExtractString(json, "html_url");
                         var prerelease = ExtractBool(json, "prerelease");
-                        var assetUrl = ExtractAssetDownloadUrlByName(json, "UpdateFile.exe");
+                        // 新方式: SlafightInstaller.zip、旧方式: UpdateFile.exe（フォールバック）
+                        var assetUrl = ExtractAssetDownloadUrlByName(json, "SlafightInstaller.zip");
+                        var isZipUpdate = !string.IsNullOrEmpty(assetUrl);
+                        if (!isZipUpdate)
+                            assetUrl = ExtractAssetDownloadUrlByName(json, "UpdateFile.exe");
 
                         if (string.IsNullOrEmpty(tagName)) return;
 
@@ -112,7 +117,9 @@ namespace SlafightInstaller
         private static void NotifyUpdate(string json, string tagName, string htmlUrl, bool prerelease, string extraMsg = "")
         {
             var currentVerStr = GetCurrentVersionDisplay();
-            var assetUrl = ExtractAssetDownloadUrlByName(json, "UpdateFile.exe");
+            var assetUrl = ExtractAssetDownloadUrlByName(json, "SlafightInstaller.zip");
+            if (string.IsNullOrEmpty(assetUrl))
+                assetUrl = ExtractAssetDownloadUrlByName(json, "UpdateFile.exe");
 
             ConsoleUI.Divider();
             if (!prerelease)
@@ -186,42 +193,85 @@ namespace SlafightInstaller
         {
             try
             {
-                var tmpDir  = Path.GetTempPath();
-                var fileExt = Path.GetExtension(assetUrl);
-                if (string.IsNullOrEmpty(fileExt)) fileExt = ".exe";
-
-                var safeTag    = tagName.Replace('/', '_').Replace('\\', '_');
-                var newExePath = Path.Combine(tmpDir, $"SlafightInstaller_new_{safeTag}{fileExt}");
-
-                ConsoleUI.Info(Messages.Get("Update_Downloading"));
-                using (var wc = new WebClient())
-                {
-                    wc.Headers.Add("User-Agent", "SlafightInstaller/UpdateDownloader");
-                    wc.DownloadFile(assetUrl, newExePath);
-                }
-                ConsoleUI.Success(Messages.Get("Update_DownloadDone"));
+                var tmpDir   = Path.GetTempPath();
+                var safeTag  = tagName.Replace('/', '_').Replace('\\', '_');
+                var isZip    = assetUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
 
                 var currentExePath = Assembly.GetExecutingAssembly().Location;
-                var updaterExePath = Path.Combine(
-                    Path.GetDirectoryName(currentExePath)!,
-                    "SlafightInstaller.Updater.exe"
-                );
+                var installDir     = Path.GetDirectoryName(currentExePath)!;
+                var updaterExePath = Path.Combine(installDir, "SlafightInstaller.Updater.exe");
 
-                if (!File.Exists(updaterExePath))
+                ConsoleUI.Info(Messages.Get("Update_Downloading"));
+
+                if (isZip)
                 {
-                    ConsoleUI.Error("SlafightInstaller.Updater.exe not found. Cannot self-update.");
-                    ConsoleUI.Info($"Expected: {updaterExePath}");
-                    return;
+                    // 新方式: zip をダウンロード → 展開 → Updater を先に上書き → フォルダモードで起動
+                    var zipPath    = Path.Combine(tmpDir, $"SlafightInstaller_update_{safeTag}.zip");
+                    var extractDir = Path.Combine(tmpDir, $"SlafightInstaller_update_{safeTag}");
+
+                    using (var wc = new WebClient())
+                    {
+                        wc.Headers.Add("User-Agent", "SlafightInstaller/UpdateDownloader");
+                        wc.DownloadFile(assetUrl, zipPath);
+                    }
+
+                    // 展開先を掃除してから展開
+                    if (Directory.Exists(extractDir))
+                        Directory.Delete(extractDir, true);
+                    ZipFile.ExtractToDirectory(zipPath, extractDir);
+
+                    // zip を掃除
+                    try { File.Delete(zipPath); } catch { }
+
+                    ConsoleUI.Success(Messages.Get("Update_DownloadDone"));
+
+                    // 展開フォルダに新しい Updater があれば、起動前に上書き
+                    var newUpdater = Path.Combine(extractDir, "SlafightInstaller.Updater.exe");
+                    if (File.Exists(newUpdater) && File.Exists(updaterExePath))
+                    {
+                        try { File.Copy(newUpdater, updaterExePath, overwrite: true); }
+                        catch { /* Updater がロック中の場合は旧版で続行 */ }
+                    }
+
+                    if (!File.Exists(updaterExePath))
+                    {
+                        ConsoleUI.Error("SlafightInstaller.Updater.exe not found. Cannot self-update.");
+                        return;
+                    }
+
+                    // Updater をフォルダモードで起動: args[0]=installDir, args[1]=extractDir
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName    = updaterExePath,
+                        Arguments   = $"\"{installDir}\" \"{extractDir}\"",
+                        UseShellExecute = false
+                    });
+                }
+                else
+                {
+                    // 旧方式: 単一 exe ダウンロード → exe モードで Updater 起動
+                    var newExePath = Path.Combine(tmpDir, $"SlafightInstaller_new_{safeTag}.exe");
+                    using (var wc = new WebClient())
+                    {
+                        wc.Headers.Add("User-Agent", "SlafightInstaller/UpdateDownloader");
+                        wc.DownloadFile(assetUrl, newExePath);
+                    }
+                    ConsoleUI.Success(Messages.Get("Update_DownloadDone"));
+
+                    if (!File.Exists(updaterExePath))
+                    {
+                        ConsoleUI.Error("SlafightInstaller.Updater.exe not found. Cannot self-update.");
+                        return;
+                    }
+
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName    = updaterExePath,
+                        Arguments   = $"\"{currentExePath}\" \"{newExePath}\"",
+                        UseShellExecute = false
+                    });
                 }
 
-                var psi = new ProcessStartInfo
-                {
-                    FileName  = updaterExePath,
-                    Arguments = $"\"{currentExePath}\" \"{newExePath}\"",
-                    UseShellExecute = false
-                };
-
-                Process.Start(psi);
                 Environment.Exit(0);
             }
             catch (Exception ex)

@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore SlafightInstaller.sln
+
+      - name: Build Release
+        run: msbuild SlafightInstaller.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package release
+        shell: pwsh
+        run: |
+          $outDir = "SlafightInstaller/bin/Release"
+          $stageDir = "release-stage"
+          New-Item -ItemType Directory -Force -Path $stageDir
+
+          # Collect release files
+          Copy-Item "$outDir/SlafightInstaller.exe" "$stageDir/"
+          Copy-Item "$outDir/SlafightInstaller.Updater.exe" "$stageDir/"
+          if (Test-Path "$outDir/LICENSE.txt") { Copy-Item "$outDir/LICENSE.txt" "$stageDir/" }
+          if (Test-Path "$outDir/README.txt") { Copy-Item "$outDir/README.txt" "$stageDir/" }
+
+          # Create zip
+          Compress-Archive -Path "$stageDir/*" -DestinationPath "SlafightInstaller.zip"
+
+          # Create UpdateFile.exe (backward compat for old clients)
+          Copy-Item "$outDir/SlafightInstaller.exe" "UpdateFile.exe"
+
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '2p')
+          if [ -n "$PREV_TAG" ]; then
+            NOTES=$(git log --pretty=format:"- %s" "$PREV_TAG"..HEAD)
+          else
+            NOTES=$(git log --pretty=format:"- %s")
+          fi
+          echo "$NOTES" > release_notes.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SlafightInstaller v${{ steps.version.outputs.version }}
+          body_path: release_notes.txt
+          files: |
+            SlafightInstaller.zip
+            UpdateFile.exe
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
