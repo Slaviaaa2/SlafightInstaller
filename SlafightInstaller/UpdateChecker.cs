@@ -16,7 +16,7 @@ namespace SlafightInstaller
             "https://api.github.com/repos/Slaviaaa2/SlafightInstaller/releases/latest";
 
         // ★手動管理（ここだけ編集）
-        public static readonly Version CurrentVersion = new Version(2, 2, 0, 0);
+        public static readonly Version CurrentVersion = new Version(2, 2, 1, 0);
         public static readonly bool IsCurrentBeta = false;   // true=pre-release
         public static readonly bool IsCurrentDev = false;    // true=開発版（更新無視）
 

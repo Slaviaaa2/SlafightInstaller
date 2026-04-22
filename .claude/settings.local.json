@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd D:\\\\\\\\RiderWorks\\\\\\\\SlafightInstaller)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix: v2.2.1 — CLIモードと@allコマンドの復旧 *)",
+      "Bash(git tag *)",
+      "Bash(git push *)"
+    ]
+  }
+}

@@ -51,7 +51,7 @@ public static class Messages
         ["InvalidMode"]       = "Invalid mode. Please enter 'install' or 'uninstall'.",
         ["InstallExitHint"]   = "(type '@all' to install all, 'exit' to return to mode selection)",
         ["UninstallExitHint"] = "(type 'exit' to return to mode selection)",
-        ["UnifiedHint"]       = "(<mod> to install, 'uninstall <mod>', '@all' / 'uninstall @all', 'exit' to quit)",
+        ["UnifiedHint"]       = "(<mod> to install, 'uninstall <mod>', @commands, '.join cli', 'help', 'exit')",
         ["UnifiedPrompt"]     = "> ",
 
         // ===== Top-level help =====
@@ -278,7 +278,7 @@ public static class Messages
         ["InvalidMode"]       = "無効なモードです。'install' または 'uninstall' を入力してください。",
         ["InstallExitHint"]   = "('@all' で全MODインストール、'exit' でモード選択に戻る)",
         ["UninstallExitHint"] = "('@all' で全MODアンインストール、'exit' でモード選択に戻る)",
-        ["UnifiedHint"]       = "(<MOD名> でインストール、'uninstall <MOD名>' で削除、'@all' / 'uninstall @all'、'exit' で終了)",
+        ["UnifiedHint"]       = "(<MOD名> でインストール、'uninstall <MOD名>'、@コマンド、'.join cli'、'help'、'exit')",
         ["UnifiedPrompt"]     = "> ",
 
         // ===== トップレベルヘルプ =====

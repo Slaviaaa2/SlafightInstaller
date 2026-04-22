@@ -147,7 +147,7 @@ namespace SlafightInstaller
             BasicUtils.EndScreen();
         }
 
-        private static void RunCliMode()
+        internal static void RunCliMode()
         {
             ConsoleUI.Header("CLI Mode");
             ConsoleUI.Info("Entered CLI mode. Type 'help' for usage, 'exit' to return.");
@@ -181,8 +181,31 @@ namespace SlafightInstaller
             }
         }
 
-        private static void ExecuteCommandLine(string input, bool autoYes, bool noBackup)
+        internal static void ExecuteCommandLine(string input, bool autoYes, bool noBackup)
         {
+            // @all 単体の場合は全MODインストールとして処理
+            if (input.Trim().ToLower() == "@all")
+            {
+                if (CurrentGame == null)
+                {
+                    ConsoleUI.Error("Game is not selected. Use '@game sel <GameName> [Path]' first.");
+                    return;
+                }
+                var resolvedGame = ResolveGameName(CurrentGame);
+                if (resolvedGame != null && resolvedGame.Equals("STRAFTAT", StringComparison.OrdinalIgnoreCase))
+                {
+                    STRAFTAT.Entry(
+                        preselectedGamePath: CurrentGamePath,
+                        commandQueue: new List<string> { "@all" },
+                        removeQueue: null,
+                        autoYes: autoYes,
+                        noBackup: noBackup,
+                        isCli: true
+                    );
+                }
+                return;
+            }
+
             var commands = CommandParser.Parse(input);
             if (commands.Count == 0)
             {

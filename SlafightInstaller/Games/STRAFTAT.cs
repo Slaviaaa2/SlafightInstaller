@@ -317,8 +317,14 @@ namespace SlafightInstaller.Games
                 var userInput = Console.ReadLine()?.Trim();
 
                 if (string.IsNullOrEmpty(userInput)) continue;
-                if (userInput.ToLower() == "exit") return;
-                if (userInput.ToLower() == "help")
+                var lowerInput = userInput.ToLower();
+                if (lowerInput == "exit") return;
+                if (lowerInput == ".join cli")
+                {
+                    Program.RunCliMode();
+                    continue;
+                }
+                if (lowerInput == "help")
                 {
                     ConsoleUI.Header(Messages.Get("HelpTitle"));
                     ConsoleUI.Info(Messages.Get("HelpNormal"));
@@ -328,7 +334,11 @@ namespace SlafightInstaller.Games
                 if (CommandParser.IsCommand(userInput))
                 {
                     Program.CurrentGamePath = _gamePath;
-                    // @game / @mod コマンドをそのまま処理
+                    var savedBackupDone = _backupDone;
+                    var savedNoBackup   = _noBackup;
+                    Program.ExecuteCommandLine(userInput, autoYes: false, noBackup: _noBackup);
+                    _backupDone = savedBackupDone;
+                    _noBackup   = savedNoBackup;
                     continue;
                 }
 
